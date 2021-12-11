@@ -71,12 +71,9 @@ fun main() {
                         .addAllTo(hosts)
                 }
             } else {
-                Runtime.getRuntime().exec("ip neigh").inputStream.bufferedReader()
+                Runtime.getRuntime().exec("ip -4 neigh show nud reachable").inputStream.bufferedReader()
                     .lineSequence()
-                    .filter { it.endsWith("REACHABLE", ignoreCase = true) }
-                    .map { it.split(" ")[0] }
-                    .filter { it.matches("(\\d+\\.){3}\\d+".toRegex()) }
-                    .map { Host(it) }
+                    .map { Host(it.substringBefore(' ')) }
                     .addAllTo(hosts)
             }
         }
