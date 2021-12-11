@@ -1,6 +1,7 @@
 package de.binarynoise.pingTui
 
 import kotlinx.coroutines.*
+import java.io.File
 import java.io.IOException
 import java.net.*
 import java.time.Clock
@@ -20,7 +21,18 @@ val hosts = sortedSetOf<Host>({ o1, o2 ->
     }
     return@sortedSetOf 0
 }).apply {
-    add(Host("62.171.176.31"))
+    val file = File("hosts.txt")
+    if (file.exists()) {
+        file.inputStream().bufferedReader().lineSequence().filterNot { it.startsWith("//") }.map { Host(it) }.addAllTo(this)
+    } else {
+        with(file) {
+            createNewFile()
+            bufferedWriter().use {
+                it.appendLine("// Add hosts (ip addresses) here you always want to ping")
+                it.appendLine("// Use // as comment or to disable an entry")
+            }
+        }
+    }
 }
 
 val isWindows = System.getProperty("os.name").lowercase().contains("win")
@@ -45,13 +57,13 @@ fun main() {
                 .flatMap { it.inetAddresses.asSequence() }
                 .filterIsInstance<Inet4Address>()
                 .map { Host(it.hostAddress) })
-			
-            if (isWindows) {                
-				Runtime.getRuntime()
-					.exec("powershell Get-NetNeighbor -AddressFamily IPv4 -State Reachable | select -ExpandProperty IPAddress").inputStream.bufferedReader()
-					.lineSequence()
-					.map { Host(it) }
-					.addAllTo(hosts)
+            
+            if (isWindows) {
+                Runtime.getRuntime()
+                    .exec("powershell Get-NetNeighbor -AddressFamily IPv4 -State Reachable | select -ExpandProperty IPAddress").inputStream.bufferedReader()
+                    .lineSequence()
+                    .map { Host(it) }
+                    .addAllTo(hosts)
             } else {
                 Runtime.getRuntime().exec("ip -4 neigh show nud reachable").inputStream.bufferedReader()
                     .lineSequence()
