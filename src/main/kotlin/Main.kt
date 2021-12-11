@@ -65,7 +65,7 @@ fun main() {
             if (isWindows) {
                 if (powershell) {
                     Runtime.getRuntime()
-                        .exec("Get-NetNeighbor -AddressFamily IPv4 -State Reachable | select -ExpandProperty IPAddress").inputStream.bufferedReader()
+                        .exec("powershell Get-NetNeighbor -AddressFamily IPv4 -State Reachable | select -ExpandProperty IPAddress").inputStream.bufferedReader()
                         .lineSequence()
                         .map { Host(it) }
                         .addAllTo(hosts)
