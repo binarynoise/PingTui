@@ -21,6 +21,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC")
     runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.0-RC")
+    implementation("org.fusesource.jansi:jansi:2.4.0")
     
 }
 

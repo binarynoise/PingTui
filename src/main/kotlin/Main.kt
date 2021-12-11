@@ -1,8 +1,12 @@
 package de.binarynoise.pingTui
 
 import kotlinx.coroutines.*
+import org.fusesource.jansi.Ansi
+import org.fusesource.jansi.Ansi.ansi
+import org.fusesource.jansi.AnsiConsole
 import java.io.File
 import java.io.IOException
+import java.lang.reflect.Method
 import java.net.*
 import java.time.Clock
 import java.time.Duration
@@ -36,15 +40,21 @@ val hosts = sortedSetOf<Host>({ o1, o2 ->
 }
 
 val isWindows = System.getProperty("os.name").lowercase().contains("win")
-
 val line = "\u2500".repeat(77)
-val clear = if (isWindows) "" else "\u001B[H\u001B[J"
+val ansiClear = "\u001B[H\u001B[J"
 
 var count = 0
 val clock: Clock = Clock.systemUTC()
 
+val ansiAppendEscapeSequenceMethod: Method = Ansi::class.java.getDeclaredMethod("appendEscapeSequence", Char::class.java).apply { isAccessible = true }
+fun Ansi.appendEscapeSequence(command: Char): Ansi {
+    ansiAppendEscapeSequenceMethod(this, command)
+    return this
+}
+
 fun main() {
     Locale.setDefault(Locale.ENGLISH)
+    if(isWindows) AnsiConsole.systemInstall()
     
     while (true) {
         count++
@@ -92,7 +102,7 @@ fun main() {
         val sleep = 1000 - elapsed
         if (sleep > 0) Thread.sleep(sleep)
         
-        print(clear)
+        print(if(isWindows) ansi().appendEscapeSequence('H').eraseScreen() else ansiClear)
         println(line)
         println(header)
         println(statistic)
@@ -185,6 +195,11 @@ class Host(internal val address: String) {
                             // host is down
                             reached = false
                             reachedHistory.addFirst(false)
+                        }
+                        arrayOf(
+                            /* Software caused connection abort */ "connection abort"
+                        ).any { msg.contains(it) } -> {
+                            // network is down, ignore
                         }
                         else -> {
                             // something unknown
