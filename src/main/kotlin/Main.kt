@@ -23,9 +23,28 @@ val hosts = sortedSetOf<Host>({ o1, o2 ->
     add(Host("62.171.176.31"))
 }
 
-val line = "\u2500".repeat(75)
-const val clear = "\u001B[H\u001B[J"
+val isWindows = System.getProperty("os.name").lowercase().contains("win")
+val powershell: Boolean = isWindows && run {
+    val currentProcess = ProcessHandle.current()
+    var parentProcessOptional = currentProcess.parent()
+    while (parentProcessOptional.isPresent) {
+        val parentProcess = parentProcessOptional.get()
+        val commandOptional = parentProcess.info().command()
+        if (commandOptional.isPresent) {
+            val command = commandOptional.get()
+            if (command.contains("powershell")) {
+                return@run true
+            }
+        }
+        parentProcessOptional = parentProcess.parent()
+    }
+    return@run false
+}
 
+val line = "\u2500".repeat(77)
+val clear = if (isWindows) "" else "\u001B[H\u001B[J"
+
+var count = 0
 val clock: Clock = Clock.systemUTC()
 
 fun main() {
@@ -43,12 +62,23 @@ fun main() {
                 .filterIsInstance<Inet4Address>()
                 .map { Host(it.hostAddress) })
             
-            hosts.addAll(Runtime.getRuntime().exec("ip neigh").inputStream.bufferedReader()
-                .lineSequence()
-                .filterNot { it.endsWith("FAILED") || it.endsWith("INCOMPLETE") }
-                .map { it.split(" ")[0] }
-                .filter { it.matches("(\\d+\\.){3}\\d+".toRegex()) }
-                .map { Host(it) })
+            if (isWindows) {
+                if (powershell) {
+                    Runtime.getRuntime()
+                        .exec("Get-NetNeighbor -AddressFamily IPv4 -State Reachable | select -ExpandProperty IPAddress").inputStream.bufferedReader()
+                        .lineSequence()
+                        .map { Host(it) }
+                        .addAllTo(hosts)
+                }
+            } else {
+                Runtime.getRuntime().exec("ip neigh").inputStream.bufferedReader()
+                    .lineSequence()
+                    .filter { it.endsWith("REACHABLE", ignoreCase = true) }
+                    .map { it.split(" ")[0] }
+                    .filter { it.matches("(\\d+\\.){3}\\d+".toRegex()) }
+                    .map { Host(it) }
+                    .addAllTo(hosts)
+            }
         }
         
         val statistic = runBlocking(Dispatchers.IO) {
@@ -60,9 +90,12 @@ fun main() {
                 }
             }.awaitAll().joinToString("\n")
         }
+        
+        hosts.removeAll { it.isUnreachable() }
+        
         val count = count.toString().padEnd(6)
-        val header = "Ping $count      now │          10 │         100 │        1000 │      total"
-//				         "192.168.2.95:    0ms │    0ms   0% │   -      -  │   -      -  │   0ms   0%"
+        val header = "Ping $count        now │          10 │         100 │        1000 │      total"
+//				     "192.168.2.95:      0ms │    0ms   0% │   -      -  │   -      -  │   0ms   0%"
         
         val elapsed = Duration.between(startTime, clock.instant()).toMillis()
         val sleep = 1000 - elapsed
@@ -76,13 +109,15 @@ fun main() {
     }
 }
 
-var count = 0
+private fun <T> Sequence<T>.addAllTo(set: MutableCollection<T>) {
+    set.addAll(this)
+}
 
 class Host(internal val address: String) {
     private val reachedHistory: ArrayDeque<Boolean> = ArrayDeque()
     private val pingHistory: ArrayDeque<Double> = ArrayDeque()
     
-    private val paddedAddress = "$address:".padEnd(15)
+    private val paddedAddress = "$address: ".padEnd(17)
     private var ping = -1
     private var reached = false
     
@@ -105,7 +140,7 @@ class Host(internal val address: String) {
                 }
             }
             2 -> {
-                
+                // adapted from https://github.com/angryip/ipscan/blob/master/src/net/azib/ipscan/core/net/TCPPinger.java
                 val socket = Socket()
                 val probePort = 80
                 val startTime = clock.instant()
@@ -200,6 +235,8 @@ class Host(internal val address: String) {
             ping.toString().padStart(3) + "ms"
         } else "  -  "
     }
+    
+    fun isUnreachable(): Boolean = reachedHistory.size >= 1000 && reachedHistory.subList(0, 100).none { it /* == true */ }
     
     //@formatter:off
     override fun toString(): String {
