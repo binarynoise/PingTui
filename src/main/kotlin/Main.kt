@@ -24,22 +24,6 @@ val hosts = sortedSetOf<Host>({ o1, o2 ->
 }
 
 val isWindows = System.getProperty("os.name").lowercase().contains("win")
-val powershell: Boolean = isWindows && run {
-    val currentProcess = ProcessHandle.current()
-    var parentProcessOptional = currentProcess.parent()
-    while (parentProcessOptional.isPresent) {
-        val parentProcess = parentProcessOptional.get()
-        val commandOptional = parentProcess.info().command()
-        if (commandOptional.isPresent) {
-            val command = commandOptional.get()
-            if (command.contains("powershell")) {
-                return@run true
-            }
-        }
-        parentProcessOptional = parentProcess.parent()
-    }
-    return@run false
-}
 
 val line = "\u2500".repeat(77)
 val clear = if (isWindows) "" else "\u001B[H\u001B[J"
@@ -61,15 +45,13 @@ fun main() {
                 .flatMap { it.inetAddresses.asSequence() }
                 .filterIsInstance<Inet4Address>()
                 .map { Host(it.hostAddress) })
-            
-            if (isWindows) {
-                if (powershell) {
-                    Runtime.getRuntime()
-                        .exec("powershell Get-NetNeighbor -AddressFamily IPv4 -State Reachable | select -ExpandProperty IPAddress").inputStream.bufferedReader()
-                        .lineSequence()
-                        .map { Host(it) }
-                        .addAllTo(hosts)
-                }
+			
+            if (isWindows) {                
+				Runtime.getRuntime()
+					.exec("powershell Get-NetNeighbor -AddressFamily IPv4 -State Reachable | select -ExpandProperty IPAddress").inputStream.bufferedReader()
+					.lineSequence()
+					.map { Host(it) }
+					.addAllTo(hosts)
             } else {
                 Runtime.getRuntime().exec("ip -4 neigh show nud reachable").inputStream.bufferedReader()
                     .lineSequence()
