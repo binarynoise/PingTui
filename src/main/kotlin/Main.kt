@@ -149,7 +149,6 @@ class Host(internal val address: String) {
     private val method = if (isWindows) 1 else 2
     
     fun ping() {
-        
         when (method) {
             1 -> {
                 val process = if (isWindows) {
@@ -161,18 +160,23 @@ class Host(internal val address: String) {
                 process.waitFor()
                 reached = process.exitValue() == 0
                 
-                reachedHistory.addFirst(reached)
+                val outLines = process.inputStream.bufferedReader().readLines().filterNot { it.isBlank() }
                 if (reached) {
-                    val lastLine =
-                        process.inputStream.bufferedReader().use { reader -> reader.lineSequence().filterNot { line -> line.isBlank() }.last() }
                     val duration = if (isWindows) {
-                        lastLine.split("=").last().trim().removeSuffix("ms").toDouble()
+                        val split = outLines.last().split("=").last().trim()
+                        if (split.contains("ms")) {
+                            split.removeSuffix("ms").toDouble()
+                        } else -1.0
                     } else { // linux
-                        lastLine.split("=").last().split("/").first().trim().toDouble()
+                        outLines.last().split("=").last().split("/").first().trim().toDouble()
                     }
-                    pingHistory.addFirst(duration)
-                    ping = duration.roundToInt()
+                    if (duration >= 0.0) {
+                        pingHistory.addFirst(duration)
+                        ping = duration.roundToInt()
+                    }
                 }
+                
+                reachedHistory.addFirst(reached)
             }
             2 -> {
                 // adapted from https://github.com/angryip/ipscan/blob/master/src/net/azib/ipscan/core/net/TCPPinger.java
