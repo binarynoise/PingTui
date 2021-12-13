@@ -12,6 +12,7 @@ import java.time.Clock
 import java.time.Duration
 import java.util.*
 import kotlin.collections.ArrayDeque
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -19,15 +20,21 @@ val hosts = sortedSetOf<Host>({ o1, o2 ->
     val o1s = o1.address.split(".")
     val o2s = o2.address.split(".")
     
-    for (i in 0 until 4) {
-        val c = o1s[i].toInt().compareTo(o2s[i].toInt())
+    for (i in 0 until min(o1s.size, o2s.size)) {
+        val o1si = o1s[i].toIntOrNull()
+        val o2si = o2s[i].toIntOrNull()
+        val c = if(o1si != null && o2si != null) {
+            o1si.compareTo(o2si)
+        } else {
+            o1s[i].compareTo(o2s[i])
+        }
         if (c != 0) return@sortedSetOf c
     }
-    return@sortedSetOf 0
+    return@sortedSetOf o1s.size - o2s.size
 }).apply {
     val file = File("hosts.txt")
     if (file.exists()) {
-        file.inputStream().bufferedReader().lineSequence().filterNot { it.startsWith("//") }.map { Host(it) }.addAllTo(this)
+        file.inputStream().bufferedReader().lineSequence().map { it.trim() }.filterNot { it.startsWith("//") || it.isEmpty() }.map { Host(it) }.addAllTo(this)
     } else {
         with(file) {
             createNewFile()
@@ -41,10 +48,13 @@ val hosts = sortedSetOf<Host>({ o1, o2 ->
 
 val isWindows = System.getProperty("os.name").lowercase().contains("win")
 val line = "\u2500".repeat(77)
-val ansiClear = "\u001B[H\u001B[J"
+val ansiClear //= "\u001B[H\u001B[J"
+//    get() = ansi().appendEscapeSequence('H').appendEscapeSequence('j').toString()
+    get() = ansi().cursor(0,0).eraseScreen().cursor(0,0).toString()
 
 var count = 0
 val clock: Clock = Clock.systemUTC()
+val interval = if (isWindows) 5000 else 1000
 
 val ansiAppendEscapeSequenceMethod: Method = Ansi::class.java.getDeclaredMethod("appendEscapeSequence", Char::class.java).apply { isAccessible = true }
 fun Ansi.appendEscapeSequence(command: Char): Ansi {
@@ -54,7 +64,12 @@ fun Ansi.appendEscapeSequence(command: Char): Ansi {
 
 fun main() {
     Locale.setDefault(Locale.ENGLISH)
-    if(isWindows) AnsiConsole.systemInstall()
+    AnsiConsole.systemInstall()
+    ansi().a(Ansi.Attribute.BLINK_SLOW).a(Ansi.Attribute.BLINK_OFF)
+    
+    Runtime.getRuntime().addShutdownHook(Thread {
+        Runtime.getRuntime().halt(0)
+    })
     
     while (true) {
         count++
@@ -99,7 +114,7 @@ fun main() {
 //				     "192.168.2.95:      0ms │    0ms   0% │   -      -  │   -      -  │   0ms   0%"
         
         val elapsed = Duration.between(startTime, clock.instant()).toMillis()
-        val sleep = 1000 - elapsed
+        val sleep = interval - elapsed
         if (sleep > 0) Thread.sleep(sleep)
         
         print(if(isWindows) ansi().appendEscapeSequence('H').eraseScreen() else ansiClear)
@@ -226,9 +241,9 @@ class Host(internal val address: String) {
     }
     
     // "1000ms"
-    // "  -   "
+    // "   -  "
     private fun paddedPing(count: Int): String {
-        if (count > pingHistory.size || count == 0 || pingHistory.size == 0) return "  -   "
+        if (count > pingHistory.size || count == 0 || pingHistory.size == 0) return "   -  "
         
         val ping = (pingHistory.subList(0, count).sum() / count).roundToInt()
         val paddedPing = ping.toString().padStart(4)
