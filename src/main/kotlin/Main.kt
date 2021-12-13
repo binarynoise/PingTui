@@ -23,7 +23,7 @@ val hosts = sortedSetOf<Host>({ o1, o2 ->
     for (i in 0 until min(o1s.size, o2s.size)) {
         val o1si = o1s[i].toIntOrNull()
         val o2si = o2s[i].toIntOrNull()
-        val c = if(o1si != null && o2si != null) {
+        val c = if (o1si != null && o2si != null) {
             o1si.compareTo(o2si)
         } else {
             o1s[i].compareTo(o2s[i])
@@ -34,7 +34,13 @@ val hosts = sortedSetOf<Host>({ o1, o2 ->
 }).apply {
     val file = File("hosts.txt")
     if (file.exists()) {
-        file.inputStream().bufferedReader().lineSequence().map { it.trim() }.filterNot { it.startsWith("//") || it.isEmpty() }.map { Host(it) }.addAllTo(this)
+        file.inputStream()
+            .bufferedReader()
+            .lineSequence()
+            .map { it.trim() }
+            .filterNot { it.startsWith("//") || it.isEmpty() }
+            .map { Host(it) }
+            .addAllTo(this)
     } else {
         with(file) {
             createNewFile()
@@ -49,14 +55,16 @@ val hosts = sortedSetOf<Host>({ o1, o2 ->
 val isWindows = System.getProperty("os.name").lowercase().contains("win")
 val line = "\u2500".repeat(77)
 val ansiClear //= "\u001B[H\u001B[J"
-//    get() = ansi().appendEscapeSequence('H').appendEscapeSequence('j').toString()
-    get() = ansi().cursor(0,0).eraseScreen().cursor(0,0).toString()
+    //    get() = ansi().appendEscapeSequence('H').appendEscapeSequence('j').toString()
+    get() = ansi().cursor(0, 0).eraseScreen().cursor(0, 0).toString()
 
 var count = 0
 val clock: Clock = Clock.systemUTC()
 val interval = if (isWindows) 5000 else 1000
 
-val ansiAppendEscapeSequenceMethod: Method = Ansi::class.java.getDeclaredMethod("appendEscapeSequence", Char::class.java).apply { isAccessible = true }
+val ansiAppendEscapeSequenceMethod: Method =
+    Ansi::class.java.getDeclaredMethod("appendEscapeSequence", Char::class.java).apply { isAccessible = true }
+
 fun Ansi.appendEscapeSequence(command: Char): Ansi {
     ansiAppendEscapeSequenceMethod(this, command)
     return this
@@ -117,7 +125,7 @@ fun main() {
         val sleep = interval - elapsed
         if (sleep > 0) Thread.sleep(sleep)
         
-        print(if(isWindows) ansi().appendEscapeSequence('H').eraseScreen() else ansiClear)
+        print(if (isWindows) ansi().appendEscapeSequence('H').eraseScreen() else ansiClear)
         println(line)
         println(header)
         println(statistic)
@@ -137,20 +145,30 @@ class Host(internal val address: String) {
     private var ping = -1
     private var reached = false
     
-    private val method = 2
+    private val method = if (isWindows) 1 else 2
     
     fun ping() {
         
         when (method) {
             1 -> {
-                val process = ProcessBuilder().command("ping", "-c", "1", "-W", "1", address).start()
+                val process = if (isWindows) {
+                    ProcessBuilder().command("ping", "-n", "1", "-w", "1", address).start()
+                } else { // linux
+                    ProcessBuilder().command("ping", "-c", "1", "-W", "1", address).start()
+                }
+                
                 process.waitFor()
                 reached = process.exitValue() == 0
                 
                 reachedHistory.addFirst(reached)
                 if (reached) {
-                    val lastLine = process.inputStream.bufferedReader().lineSequence().last()
-                    val duration = lastLine.split("=").last().split("/").first().trim().toDouble()
+                    val lastLine =
+                        process.inputStream.bufferedReader().use { reader -> reader.lineSequence().filterNot { line -> line.isBlank() }.last() }
+                    val duration = if (isWindows) {
+                        lastLine.split("=").last().trim().removeSuffix("ms").toDouble()
+                    } else { // linux
+                        lastLine.split("=").last().split("/").first().trim().toDouble()
+                    }
                     pingHistory.addFirst(duration)
                     ping = duration.roundToInt()
                 }
