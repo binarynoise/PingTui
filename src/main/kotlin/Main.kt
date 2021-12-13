@@ -16,6 +16,8 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
+val isWindows = System.getProperty("os.name").lowercase().contains("win")
+
 val hosts = sortedSetOf<Host>({ o1, o2 ->
     val o1s = o1.address.split(".")
     val o2s = o2.address.split(".")
@@ -52,7 +54,6 @@ val hosts = sortedSetOf<Host>({ o1, o2 ->
     }
 }
 
-val isWindows = System.getProperty("os.name").lowercase().contains("win")
 val line = "\u2500".repeat(77)
 val ansiClear //= "\u001B[H\u001B[J"
     //    get() = ansi().appendEscapeSequence('H').appendEscapeSequence('j').toString()
