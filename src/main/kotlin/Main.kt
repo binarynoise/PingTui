@@ -116,7 +116,7 @@ fun main() {
             }.awaitAll().joinToString("\n")
         }
         
-        hosts.removeAll { it.isUnreachable() }
+//        hosts.removeAll { it.isUnreachable() }
         
         val count = count.toString().padEnd(6)
         val header = "Ping $count        now │          10 │         100 │        1000 │      total"
