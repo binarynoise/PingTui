@@ -36,7 +36,7 @@ tasks.withType<ShadowJar> {
     mergeServiceFiles()
     minimize()
     manifest {
-        attributes(mapOf("Main-Class" to "de.binarynoise.pingTui.MainKt"))
+        attributes(mapOf("Main-Class" to "de.binarynoise.pingTui.Main"))
     }
 }
 

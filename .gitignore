@@ -2,4 +2,5 @@
 /.gradle/
 /.idea
 !/.idea/runConfigurations/*
-/hosts.txt
+hosts.txt
+config.properties
