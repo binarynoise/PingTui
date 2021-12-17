@@ -1,10 +1,7 @@
 package de.binarynoise.pingTui
 
 import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.NoRouteToHostException
-import java.net.Socket
-import java.net.SocketTimeoutException
+import java.net.*
 import java.time.Clock
 import java.time.Duration
 
@@ -91,6 +88,8 @@ interface Pinger {
                 }
             } catch (ignore: SocketTimeoutException) {
                 reachable = false
+            } catch (ignore: UnknownHostException) {
+                reachable = false
             } catch (ignore: NoRouteToHostException) {
                 reachable = false
             } catch (e: IOException) {
@@ -108,7 +107,7 @@ interface Pinger {
                         duration = Duration.between(startTime, stopTime).toNanos() / 1e6
                         reachable = true
                     }
-                    e is NoRouteToHostException || msg.containsAny(
+                    msg.containsAny(
                         /*No*/ "route to host",
                         /*Host is*/ "down",
                         /*Network*/ "unreachable",
