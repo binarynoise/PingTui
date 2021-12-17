@@ -59,8 +59,8 @@ object Main {
             val startTime = clock.instant()
             
             if (count % 10 == 1) {
-                
-                ArpScanner.findNewHosts()
+                NetworkInterfaceScanner.scanNetworkInterfaces().addAllTo(hosts)
+                ArpScanner.findNewHosts().addAllTo(hosts)
             }
             
             val statistic = runBlocking(Dispatchers.IO) {
