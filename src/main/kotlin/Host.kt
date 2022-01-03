@@ -6,7 +6,7 @@ class Host(val address: String) {
     private val reachedHistory: ArrayDeque<Boolean> = ArrayDeque()
     private val pingHistory: ArrayDeque<Double> = ArrayDeque()
     
-    private val paddedAddress = "$address: ".padEnd(17)
+    private val paddedAddress = address.padOrEllipsise(15)
     private var ping = -1
     private var reached = false
     
@@ -54,7 +54,7 @@ class Host(val address: String) {
     
     //@formatter:off
     override fun toString(): String {
-        return paddedAddress +
+        return paddedAddress + " │ " +
                 lastPingPadded() + " │ " +
                 paddedPing(10) + " " +
                 paddedLoss(10) + " │ " +
@@ -66,4 +66,13 @@ class Host(val address: String) {
                 paddedLoss(reachedHistory.size)
     }
     //@formatter:on
+    
+    
+    private fun String.padOrEllipsise(targetSize: Int): String {
+        return when {
+            length == targetSize -> this
+            length < targetSize -> this.padEnd(targetSize)
+            else /* length > size */ -> this.substring(0, targetSize - 1) + "…"
+        }
+    }
 }

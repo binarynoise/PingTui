@@ -36,7 +36,7 @@ object Main {
         }
     }
     
-    private val line = "\u2500".repeat(77)
+    private val line = "\u2500".repeat(78)
     private val ansiClear
         get() = ansi().cursor(0, 0).eraseScreen().cursor(0, 0).toString()
     
@@ -76,8 +76,8 @@ object Main {
 //            hosts.removeAll { it.isUnreachable() }
             
             val count = count.toString().padEnd(6)
-            val header = "Ping $count        now │          10 │         100 │        1000 │      total"
-            //           "192.168.2.95:      0ms │    0ms   0% │   -      -  │   -      -  │   0ms   0%"
+            val header = "Ping $count     │   now │          10 │         100 │        1000 │      total"
+            //           "127.0.0.1       │   0ms │    1ms   0% │    -     -  │    -     -  │   1ms   0%"
             
             val elapsed = Duration.between(startTime, clock.instant()).toMillis()
             val sleep = PingProperties.interval - elapsed
