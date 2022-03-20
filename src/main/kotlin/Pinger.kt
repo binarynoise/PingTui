@@ -12,10 +12,10 @@ interface Pinger {
         private val clock: Clock = Clock.systemUTC()
         
         override fun ping(address: String): PingResult {
-            return when (PingProperties.pingMethod) {
+            return when (PingConfiguration.pingMethod) {
                 PingMethod.Tcp -> TCPPinger.ping(address)
                 PingMethod.Command -> {
-                    if (PingProperties.isWindows) {
+                    if (PingConfiguration.isWindows) {
                         WindowsPinger.ping(address)
                     } else {
                         LinuxPinger.ping(address)

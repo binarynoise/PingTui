@@ -1,39 +1,21 @@
 package de.binarynoise.pingTui
 
-import kotlinx.coroutines.*
-import org.fusesource.jansi.Ansi
-import org.fusesource.jansi.Ansi.ansi
-import org.fusesource.jansi.AnsiConsole
-import java.io.File
 import java.time.Clock
 import java.time.Duration
 import java.util.*
 import kotlin.math.min
 import kotlin.random.Random
+import kotlinx.coroutines.*
+import org.fusesource.jansi.Ansi
+import org.fusesource.jansi.Ansi.ansi
+import org.fusesource.jansi.AnsiConsole
 
 object Main {
     
     private val hosts = sortedSetOf<Host>(::hostComparator)
     
     init {
-        val file = File("hosts.txt")
-        if (file.exists()) {
-            file.inputStream()
-                .bufferedReader()
-                .lineSequence()
-                .map { it.trim() }
-                .filterNot { it.startsWith("//") || it.isEmpty() }
-                .map { Host(it) }
-                .addAllTo(hosts)
-        } else {
-            with(file) {
-                createNewFile()
-                bufferedWriter().use {
-                    it.appendLine("// Add hosts (ip addresses) here you always want to ping")
-                    it.appendLine("// Use // as comment or to disable an entry")
-                }
-            }
-        }
+        hosts.addAll(PingConfiguration.hosts.map { Host(it) })
     }
     
     private val line = "\u2500".repeat(78)
@@ -80,7 +62,7 @@ object Main {
             //           "127.0.0.1       │   0ms │    1ms   0% │    -     -  │    -     -  │   1ms   0%"
             
             val elapsed = Duration.between(startTime, clock.instant()).toMillis()
-            val sleep = PingProperties.interval - elapsed
+            val sleep = PingConfiguration.interval - elapsed
             if (sleep > 0) Thread.sleep(sleep)
             
             print(ansiClear)

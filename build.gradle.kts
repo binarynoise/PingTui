@@ -16,11 +16,17 @@ repositories {
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform(kotlin("bom")))
-    
-    // Use the Kotlin JDK 8 standard library.
     implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC")
-    runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.0-RC")
+    implementation(kotlin("reflect"))
+    
+    implementation("org.jetbrains.kotlin:kotlin-scripting-common")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-dependencies")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-dependencies-maven")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.0")
+    
     implementation("org.fusesource.jansi:jansi:2.4.0")
     
 }
@@ -34,7 +40,7 @@ tasks.withType<ShadowJar> {
     archiveClassifier.set("")
     archiveVersion.set("standalone")
     mergeServiceFiles()
-    minimize()
+//    minimize()
     manifest {
         attributes(mapOf("Main-Class" to "de.binarynoise.pingTui.Main"))
     }

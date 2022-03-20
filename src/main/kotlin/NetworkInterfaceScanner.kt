@@ -4,7 +4,7 @@ import java.net.Inet4Address
 import java.net.NetworkInterface
 
 object NetworkInterfaceScanner {
-    fun scanNetworkInterfaces(): List<Host> = if (!PingProperties.enableInterfaceScan) emptyList() else {
+    fun scanNetworkInterfaces(): List<Host> = if (!PingConfiguration.enableInterfaceScan) emptyList() else {
         NetworkInterface.getNetworkInterfaces()
             .asSequence()
             .flatMap { it.inetAddresses.asSequence() }

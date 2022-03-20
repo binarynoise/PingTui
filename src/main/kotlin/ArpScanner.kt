@@ -5,8 +5,8 @@ interface ArpScanner {
     
     companion object : ArpScanner {
         override fun findNewHosts(): List<Host> = when {
-            !PingProperties.enableArpScan -> emptyList()
-            PingProperties.isWindows -> WindowsArpScanner.findNewHosts()
+            !PingConfiguration.enableArpScan -> emptyList()
+            PingConfiguration.isWindows -> WindowsArpScanner.findNewHosts()
             else -> LinuxArpScanner.findNewHosts()
         }
     }

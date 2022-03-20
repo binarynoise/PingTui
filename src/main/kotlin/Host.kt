@@ -67,7 +67,6 @@ class Host(val address: String) {
     }
     //@formatter:on
     
-    
     private fun String.padOrEllipsise(targetSize: Int): String {
         return when {
             length == targetSize -> this
