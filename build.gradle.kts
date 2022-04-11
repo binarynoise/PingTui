@@ -17,18 +17,13 @@ dependencies {
     // Align versions of all Kotlin components
     implementation(platform(kotlin("bom")))
     implementation(kotlin("stdlib-jdk8"))
-    implementation(kotlin("reflect"))
+    runtimeOnly(kotlin("reflect"))
     
-    implementation("org.jetbrains.kotlin:kotlin-scripting-common")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-dependencies")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-dependencies-maven")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jvm")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-    runtimeOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
     
     implementation("org.fusesource.jansi:jansi:2.4.0")
-    
 }
 
 tasks.withType<KotlinCompile> {
@@ -40,7 +35,10 @@ tasks.withType<ShadowJar> {
     archiveClassifier.set("")
     archiveVersion.set("standalone")
     mergeServiceFiles()
-//    minimize()
+    minimize {
+        exclude(dependency("org.jetbrains.kotlin:kotlin-reflect.*:.*"))
+        exclude(dependency("org.jetbrains.kotlin:kotlin-compiler-embeddable.*:.*"))
+    }
     manifest {
         attributes(mapOf("Main-Class" to "de.binarynoise.pingTui.Main"))
     }
