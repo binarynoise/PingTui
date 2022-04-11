@@ -4,7 +4,6 @@ import java.io.File
 import kotlin.script.experimental.api.EvaluationResult
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.system.exitProcess
-import evalFile
 
 object PingConfiguration {
     val isWindows = System.getProperty("os.name").lowercase().contains("win")

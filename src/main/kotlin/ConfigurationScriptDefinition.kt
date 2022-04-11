@@ -1,3 +1,5 @@
+package de.binarynoise.pingTui
+
 // https://kotlinlang.org/docs/custom-script-deps-tutorial.html#create-a-scripting-host
 
 import java.io.File
