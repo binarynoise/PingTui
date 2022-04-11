@@ -34,7 +34,7 @@ object Main {
         
         Locale.setDefault(Locale.ENGLISH)
         AnsiConsole.systemInstall()
-        ansi().a(Ansi.Attribute.BLINK_SLOW).a(Ansi.Attribute.BLINK_OFF)
+        print(ansi().a(Ansi.Attribute.BLINK_OFF))
         
         Runtime.getRuntime().addShutdownHook(Thread {
             Runtime.getRuntime().halt(0)
