@@ -5,6 +5,7 @@ import java.time.Duration
 import java.util.*
 import kotlin.math.min
 import kotlin.random.Random
+import kotlin.system.exitProcess
 import kotlinx.coroutines.*
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.Ansi.ansi
@@ -13,10 +14,6 @@ import org.fusesource.jansi.AnsiConsole
 object Main {
     
     private val hosts = sortedSetOf<Host>(::hostComparator)
-    
-    init {
-        hosts.addAll(PingConfiguration.hosts.map { Host(it) })
-    }
     
     private val line = "\u2500".repeat(78)
     private val ansiClear
@@ -27,6 +24,14 @@ object Main {
     
     @JvmStatic
     fun main(args: Array<String>) {
+        if (System.console() == null || System.console().reader() == null) {
+            if (args.isNotEmpty() && args.first() == "-r") {
+                exitProcess(0)
+            } else {
+                ProcessRestarter.restartInConsole()
+            }
+        }
+        
         Locale.setDefault(Locale.ENGLISH)
         AnsiConsole.systemInstall()
         ansi().a(Ansi.Attribute.BLINK_SLOW).a(Ansi.Attribute.BLINK_OFF)
@@ -34,6 +39,8 @@ object Main {
         Runtime.getRuntime().addShutdownHook(Thread {
             Runtime.getRuntime().halt(0)
         })
+        
+        hosts.addAll(PingConfiguration.hosts.map { Host(it) })
         
         while (true) {
             count++
