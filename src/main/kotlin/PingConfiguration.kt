@@ -3,6 +3,7 @@ package de.binarynoise.pingTui
 import java.io.File
 import kotlin.script.experimental.api.EvaluationResult
 import kotlin.script.experimental.api.ResultWithDiagnostics
+import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.system.exitProcess
 
 object PingConfiguration {
@@ -17,9 +18,7 @@ object PingConfiguration {
     init {
         val file = File("pingtui.config.kts")
         
-        val res: ResultWithDiagnostics<EvaluationResult> = evalFile(file)
-        
-        if (res is ResultWithDiagnostics.Failure || !file.exists() || file.readText().isBlank()) {
+        if (!file.exists() || file.readText().isBlank()) {
             try {
                 file.bufferedWriter().use {
                     it.write("""
@@ -43,14 +42,26 @@ object PingConfiguration {
                 System.err.println("""
                     Konnte die pingtui.config.kts nicht einlesen.
                     Die Datei wurde neu erstellt und mit den Standardwerten gefüllt.
+                    ${file.canonicalPath}
                     """.trimIndent())
             } catch (e: Exception) {
                 System.err.println("""
                     Konnte die pingtui.config.kts nicht einlesen.
                     Die Datei konnte aber auch nicht neu erstellt und mit den Standardwerten gefüllt werden:
-                    
+                    ${file.canonicalPath}
                 """.trimIndent() + e.stackTraceToString())
             }
+            exitProcess(1)
+        }
+        
+        val res: ResultWithDiagnostics<EvaluationResult> = evalFile(file)
+        
+        if (res is ResultWithDiagnostics.Failure) {
+            System.err.println("""
+                Konnte die pingtui.config.kts nicht einlesen:
+                ${file.canonicalPath}
+                """.trimIndent())
+            res.reports.filter { it.severity > ScriptDiagnostic.Severity.DEBUG }.forEach { System.err.println(it) }
             exitProcess(1)
         }
     }
