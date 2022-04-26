@@ -2,8 +2,6 @@
 /.gradle/
 
 /.idea
-!/.idea/compiler.xml
-!/.idea/gradle.xml
 !/.idea/vcs.xml
 !/.idea/inspectionProfiles/profiles_settings.xml
 !/.idea/runConfigurations/*
@@ -11,3 +9,4 @@
 hosts.txt
 config.properties
 pingtui.config.kts
+pingTui.conf

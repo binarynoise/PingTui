@@ -1,10 +1,9 @@
 package de.binarynoise.pingTui
 
-import java.io.File
 import kotlin.system.exitProcess
+import de.binarynoise.pingTui.PingConfiguration.Companion.jarFilePath
 
 object ProcessRestarter {
-    private val jarFilePath = File(this::class.java.protectionDomain.codeSource.location.toURI()).absolutePath
     
     fun restartInConsole(): Nothing {
         if (PingConfiguration.isWindows) {
@@ -20,6 +19,6 @@ object ProcessRestarter {
     }
     
     private fun restartInConsoleLinux() {
-        TODO()
+        // TODO
     }
 }

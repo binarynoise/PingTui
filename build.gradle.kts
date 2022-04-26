@@ -1,51 +1,96 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.gradle.plugins.ide.idea.model.IdeaLanguageLevel
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.6.20"
+    kotlin("jvm") version "1.6.21"
     id("com.github.johnrengelman.shadow") version "7.1.0"
+    idea
 }
 
-//group = "de.binarynoise"
-//version = "1.0-SNAPSHOT"
+val javaVersion = JavaVersion.VERSION_1_8
+val javaVersionNumber = javaVersion.name.substringAfter('_').replace('_', '.')
+val javaVersionMajor = javaVersion.name.substringAfterLast('_')
+
+idea {
+    module {
+        isDownloadJavadoc = true
+        isDownloadSources = true
+        languageLevel = IdeaLanguageLevel(javaVersion)
+        targetBytecodeVersion = javaVersion
+    }
+}
+
+val main = "de.binarynoise.pingTui.Main"
 
 repositories {
     mavenCentral()
+    google()
 }
+
+val r8: Configuration by configurations.creating
 
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform(kotlin("bom")))
-    implementation(kotlin("stdlib-jdk8"))
-    runtimeOnly(kotlin("reflect"))
+    implementation(kotlin("reflect"))
     
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
     
     implementation("org.fusesource.jansi:jansi:2.4.0")
+    implementation("io.github.config4k:config4k:0.4.2")
+    
+    r8("com.android.tools:r8:3.3.28")
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = javaVersionNumber
 }
 
 tasks.withType<AbstractCompile> {
-    sourceCompatibility = "1.8"
-    targetCompatibility = "1.8"
+    sourceCompatibility = javaVersionNumber
+    targetCompatibility = javaVersionNumber
+}
+
+tasks.withType<Jar> {
+    manifest {
+        attributes(mapOf("Main-Class" to main))
+    }
 }
 
 tasks.withType<ShadowJar> {
-//    archiveBaseName.set("shadow")
-    archiveClassifier.set("")
-    archiveVersion.set("standalone")
+    archiveClassifier.set("shadow")
     mergeServiceFiles()
-    minimize {
-        exclude(dependency("org.jetbrains.kotlin:kotlin-reflect.*:.*"))
-        exclude(dependency("org.jetbrains.kotlin:kotlin-compiler-embeddable.*:.*"))
-    }
-    manifest {
-        attributes(mapOf("Main-Class" to "de.binarynoise.pingTui.Main"))
+}
+
+val shadowJarMinified = tasks.register<JavaExec>("shadowJarMinified") {
+    dependsOn(configurations.runtimeClasspath)
+    
+    val proguardRules = file("src/main/proguard-rules.pro")
+    inputs.files(tasks.shadowJar.get().outputs.files, proguardRules)
+    
+    val r8File = File("$buildDir/libs/${base.archivesName.get()}-shadow-minified.jar")
+    outputs.file(r8File)
+    
+    classpath(r8)
+    
+    mainClass.set("com.android.tools.r8.R8")
+    val args = mutableListOf(
+        "--debug",
+        "--classfile",
+        "--output",
+        r8File.toString(),
+        "--pg-conf",
+        proguardRules.toString(),
+        "--lib",
+        "/usr/lib/jvm/java-$javaVersionMajor-openjdk/", // TODO adapt to your system, needs to be a jdk 11
+    )
+    args.add(tasks.shadowJar.get().outputs.files.joinToString(" "))
+    
+    this.args = args
+    
+    doFirst {
+        check(proguardRules.exists()) { "$proguardRules doesn't exist" }
     }
 }
 

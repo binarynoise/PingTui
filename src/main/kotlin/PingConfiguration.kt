@@ -1,68 +1,91 @@
 package de.binarynoise.pingTui
 
 import java.io.File
-import kotlin.script.experimental.api.EvaluationResult
-import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptDiagnostic
+import java.lang.reflect.ParameterizedType
+import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.javaType
 import kotlin.system.exitProcess
+import com.typesafe.config.ConfigFactory
+import com.typesafe.config.ConfigRenderOptions
+import io.github.config4k.extract
+import io.github.config4k.toConfig
 
-object PingConfiguration {
-    val isWindows = System.getProperty("os.name").lowercase().contains("win")
-    var pingMethod: PingMethod = PingMethod.Tcp
-    var interval: Long = 1000
-    var enableArpScan: Boolean = true
-    var enableInterfaceScan: Boolean = true
+interface PingConfiguration {
+    val pingMethod: PingMethod
+    val interval: Long
+    val enableArpScan: Boolean
+    val enableInterfaceScan: Boolean
     
-    var hosts: List<String> = mutableListOf()
+    val hosts: List<String>
     
-    init {
-        val file = File("pingtui.config.kts")
+    companion object : PingConfiguration by PingConfigurationSupport.loadedPingConfiguration {
+        val isWindows: Boolean = System.getProperty("os.name").lowercase().contains("win")
         
-        if (!file.exists() || file.readText().isBlank()) {
+        val jarFile = File(this::class.java.protectionDomain.codeSource.location.toURI())
+        val jarFilePath: String = jarFile.absolutePath
+    }
+    
+    @OptIn(ExperimentalStdlibApi::class)
+    private object PingConfigurationSupport {
+        val loadedPingConfiguration: LoadedConfiguration
+        
+        val configFile = File(jarFile.parent, "pingTui.conf")
+        
+        private const val configRootPath = "pingTui"
+        
+        init {
+            check((LoadedConfiguration::class.primaryConstructor!!.parameters.last().type.javaType as ParameterizedType).actualTypeArguments.isNotEmpty())
+            
+            if (!configFile.exists()) createFileAndExit()
+            
+            val configFileText = configFile.readText()
+            if (configFileText.isBlank()) createFileAndExit()
+            
+            val parseString = ConfigFactory.parseString(configFileText)
+            loadedPingConfiguration = parseString.extract(configRootPath)
+            println("loaded configuration:")
+            println(loadedPingConfiguration)
+        }
+        
+        private val configRenderOptions: ConfigRenderOptions
+            get() = ConfigRenderOptions.defaults().setOriginComments(false).setComments(true).setFormatted(true).setJson(false)
+        
+        private fun createFileAndExit(): Nothing {
             try {
-                file.bufferedWriter().use {
-                    it.write("""
-                        package de.binarynoise.pingTui
-                        
-                        with(PingConfiguration) {
-                            
-                            hosts = listOf(
-                            
-                            )
-                            
-                            pingMethod = PingMethod.Tcp
-                            interval = 1000
-                            enableArpScan = true
-                            enableInterfaceScan = true
-                        }
-                        """.trimIndent())
+                val defaultConfig = LoadedConfiguration(
+                    pingMethod = PingMethod.Tcp,
+                    interval = 1000L,
+                    enableArpScan = true,
+                    enableInterfaceScan = true,
+                    hosts = emptyList(),
+                ).toConfig(configRootPath).root().render(configRenderOptions)
+                
+                configFile.bufferedWriter().use {
+                    it.write(defaultConfig)
                     it.flush()
                 }
-                assert(file.readText().isNotBlank())
+                check(configFile.readText().isNotBlank())
                 System.err.println("""
-                    Konnte die pingtui.config.kts nicht einlesen.
+                    Konnte die $configFile nicht einlesen.
                     Die Datei wurde neu erstellt und mit den Standardwerten gefüllt.
-                    ${file.canonicalPath}
+                    ${configFile.canonicalPath}
                     """.trimIndent())
             } catch (e: Exception) {
                 System.err.println("""
-                    Konnte die pingtui.config.kts nicht einlesen.
+                    Konnte die $configFile nicht einlesen.
                     Die Datei konnte aber auch nicht neu erstellt und mit den Standardwerten gefüllt werden:
-                    ${file.canonicalPath}
-                """.trimIndent() + e.stackTraceToString())
+                    ${configFile.canonicalPath}
+                    """.trimIndent() + "\n" + e.stackTraceToString())
             }
             exitProcess(1)
         }
-        
-        val res: ResultWithDiagnostics<EvaluationResult> = evalFile(file)
-        
-        if (res is ResultWithDiagnostics.Failure) {
-            System.err.println("""
-                Konnte die pingtui.config.kts nicht einlesen:
-                ${file.canonicalPath}
-                """.trimIndent())
-            res.reports.filter { it.severity > ScriptDiagnostic.Severity.DEBUG }.forEach { System.err.println(it) }
-            exitProcess(1)
-        }
     }
+    
+    data class LoadedConfiguration(
+        override var pingMethod: PingMethod,
+        override var interval: Long,
+        override var enableArpScan: Boolean,
+        override var enableInterfaceScan: Boolean,
+        override var hosts: List<String>,
+    ) : PingConfiguration
 }
