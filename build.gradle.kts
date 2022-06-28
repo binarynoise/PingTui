@@ -33,9 +33,8 @@ val r8: Configuration by configurations.creating
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform(kotlin("bom")))
-    implementation(kotlin("reflect"))
     
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
     
     implementation("org.fusesource.jansi:jansi:2.4.0")
     implementation("io.github.config4k:config4k:0.4.2")

@@ -1,9 +1,6 @@
 package de.binarynoise.pingTui
 
 import java.io.File
-import java.lang.reflect.ParameterizedType
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.javaType
 import kotlin.system.exitProcess
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigRenderOptions
@@ -34,8 +31,6 @@ interface PingConfiguration {
         private const val configRootPath = "pingTui"
         
         init {
-            check((LoadedConfiguration::class.primaryConstructor!!.parameters.last().type.javaType as ParameterizedType).actualTypeArguments.isNotEmpty())
-            
             if (!configFile.exists()) createFileAndExit()
             
             val configFileText = configFile.readText()
