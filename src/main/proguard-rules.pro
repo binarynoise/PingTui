@@ -23,7 +23,7 @@
 #-keep class ** extends de.binarynoise.pingTui.PingConfiguration { *; }
 #-keep class de.binarynoise.pingTui.PingConfigurationKt { *; }
 
--keepclassmembers class * {
+-keepclassmembers, allowoptimization class * {
     *** INSTANCE;
 }
 
