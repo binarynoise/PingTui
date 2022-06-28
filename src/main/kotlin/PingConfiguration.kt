@@ -15,18 +15,15 @@ interface PingConfiguration {
     
     val hosts: List<String>
     
-    companion object : PingConfiguration by PingConfigurationSupport.loadedPingConfiguration {
+    companion object : PingConfiguration by PingConfigurationSupport.loadedPingConfiguration, JarFileProvider by PingConfigurationSupport {
         val isWindows: Boolean = System.getProperty("os.name").lowercase().contains("win")
-        
-        val jarFile = File(this::class.java.protectionDomain.codeSource.location.toURI())
-        val jarFilePath: String = jarFile.absolutePath
     }
     
-    @OptIn(ExperimentalStdlibApi::class)
-    private object PingConfigurationSupport {
+    private object PingConfigurationSupport : JarFileProvider {
         val loadedPingConfiguration: LoadedConfiguration
         
-        val configFile = File(jarFile.parent, "pingTui.conf")
+        override val jarFile: File? = File(this::class.java.protectionDomain.codeSource.location.toURI()).takeIf { it.absolutePath.endsWith(".jar") }
+        val configFile = File(jarFile?.parent, "pingTui.conf")
         
         private const val configRootPath = "pingTui"
         
@@ -60,20 +57,28 @@ interface PingConfiguration {
                     it.flush()
                 }
                 check(configFile.readText().isNotBlank())
-                System.err.println("""
+                System.err.println(
+                    """
                     Konnte die $configFile nicht einlesen.
                     Die Datei wurde neu erstellt und mit den Standardwerten gefüllt.
                     ${configFile.canonicalPath}
-                    """.trimIndent())
+                    """.trimIndent()
+                )
             } catch (e: Exception) {
-                System.err.println("""
+                System.err.println(
+                    """
                     Konnte die $configFile nicht einlesen.
                     Die Datei konnte aber auch nicht neu erstellt und mit den Standardwerten gefüllt werden:
                     ${configFile.canonicalPath}
-                    """.trimIndent() + "\n" + e.stackTraceToString())
+                    """.trimIndent() + "\n" + e.stackTraceToString()
+                )
             }
             exitProcess(1)
         }
+    }
+    
+    private interface JarFileProvider {
+        val jarFile: File?
     }
     
     data class LoadedConfiguration(

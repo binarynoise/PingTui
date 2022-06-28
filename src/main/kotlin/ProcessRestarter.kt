@@ -1,21 +1,24 @@
 package de.binarynoise.pingTui
 
 import kotlin.system.exitProcess
-import de.binarynoise.pingTui.PingConfiguration.Companion.jarFilePath
+import de.binarynoise.pingTui.PingConfiguration.Companion.jarFile
 
 object ProcessRestarter {
     
-    fun restartInConsole(): Nothing {
+    fun restartInConsole() {
         if (PingConfiguration.isWindows) {
             restartInConsoleWindows()
         } else {
             restartInConsoleLinux()
         }
-        exitProcess(0)
     }
     
     private fun restartInConsoleWindows() {
-        Runtime.getRuntime().exec("cmd /c start cmd /k java -jar $jarFilePath -r")
+        val canonicalPath = jarFile?.canonicalPath
+        if (canonicalPath != null) {
+            Runtime.getRuntime().exec("cmd /c start cmd /k java -jar $canonicalPath -r")
+            exitProcess(0)
+        }
     }
     
     private fun restartInConsoleLinux() {
