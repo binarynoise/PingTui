@@ -3,12 +3,12 @@ import org.gradle.plugins.ide.idea.model.IdeaLanguageLevel
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.6.21"
+    kotlin("jvm") version "1.7.0"
     id("com.github.johnrengelman.shadow") version "7.1.0"
     idea
 }
 
-val javaVersion = JavaVersion.VERSION_1_8
+val javaVersion = JavaVersion.VERSION_17
 val javaVersionNumber = javaVersion.name.substringAfter('_').replace('_', '.')
 val javaVersionMajor = javaVersion.name.substringAfterLast('_')
 
