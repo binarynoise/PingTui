@@ -24,7 +24,7 @@ object Main {
     
     @JvmStatic
     fun main(args: Array<String>) {
-        if ((System.console() == null || System.console().reader() == null) && PingConfiguration.isWindows) { // TODO catch if running in IDE
+        if ((System.console() == null || System.console().reader() == null)) {
             if (args.isNotEmpty() && args.first() == "-r") {
                 exitProcess(0)
             } else {

@@ -17,6 +17,7 @@ object ProcessRestarter {
         val canonicalPath = jarFile?.canonicalPath
         if (canonicalPath != null) {
             Runtime.getRuntime().exec("cmd /c start cmd /k java -jar $canonicalPath -r")
+            println("restarted process in cmd, $jarFile")
             exitProcess(0)
         }
     }

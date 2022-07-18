@@ -33,6 +33,7 @@ val r8: Configuration by configurations.creating
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform(kotlin("bom")))
+    implementation(platform(kotlin("reflect")))
     
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
     

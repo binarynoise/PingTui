@@ -20,8 +20,7 @@
 	public static void main(java.lang.String[]);
 }
 -keep class de.binarynoise.pingTui.PingConfiguration$LoadedConfiguration { *; }
-#-keep class ** extends de.binarynoise.pingTui.PingConfiguration { *; }
-#-keep class de.binarynoise.pingTui.PingConfigurationKt { *; }
+-keep class org.fusesource.jansi.internal.* { *; }
 
 -keepclassmembers, allowoptimization class * {
     *** INSTANCE;
