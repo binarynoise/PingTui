@@ -3,7 +3,7 @@ import org.gradle.plugins.ide.idea.model.IdeaLanguageLevel
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.7.0"
+    kotlin("jvm") version "1.7.10"
     id("com.github.johnrengelman.shadow") version "7.1.0"
     idea
 }
@@ -26,6 +26,9 @@ val main = "de.binarynoise.pingTui.Main"
 repositories {
     mavenCentral()
     google()
+    maven {
+        url = uri("https://storage.googleapis.com/r8-releases/raw")
+    }
 }
 
 val r8: Configuration by configurations.creating
@@ -35,12 +38,12 @@ dependencies {
     implementation(platform(kotlin("bom")))
     implementation(platform(kotlin("reflect")))
     
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     
     implementation("org.fusesource.jansi:jansi:2.4.0")
     implementation("io.github.config4k:config4k:0.4.2")
     
-    r8("com.android.tools:r8:3.3.28")
+    r8("com.android.tools:r8:3.3.72")
 }
 
 tasks.withType<KotlinCompile> {
