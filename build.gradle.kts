@@ -3,12 +3,12 @@ import org.gradle.plugins.ide.idea.model.IdeaLanguageLevel
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.7.10"
+    kotlin("jvm") version "1.8.21"
     id("com.github.johnrengelman.shadow") version "7.1.0"
     idea
 }
 
-val javaVersion = JavaVersion.VERSION_17
+val javaVersion = JavaVersion.VERSION_1_8
 val javaVersionNumber = javaVersion.name.substringAfter('_').replace('_', '.')
 val javaVersionMajor = javaVersion.name.substringAfterLast('_')
 
@@ -38,12 +38,12 @@ dependencies {
     implementation(platform(kotlin("bom")))
     implementation(platform(kotlin("reflect")))
     
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     
     implementation("org.fusesource.jansi:jansi:2.4.0")
-    implementation("io.github.config4k:config4k:0.4.2")
+    implementation("io.github.config4k:config4k:0.6.0")
     
-    r8("com.android.tools:r8:3.3.72")
+    r8("com.android.tools:r8:8.0.40")
 }
 
 tasks.withType<KotlinCompile> {
