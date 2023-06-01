@@ -22,6 +22,10 @@ object Main {
     private var count = 0
     private val clock: Clock = Clock.systemUTC()
     
+    const val statCount1 = 10
+    const val statCount2 = 60
+    const val statCount3 = 600
+    
     @JvmStatic
     fun main(args: Array<String>) {
         if ((System.console() == null || System.console().reader() == null)) {
@@ -65,8 +69,19 @@ object Main {
 //            hosts.removeAll { it.isUnreachable() }
             
             val count = count.toString().padEnd(6)
-            val header = "Ping $count     │   now │          10 │         100 │        1000 │      total"
-            //           "127.0.0.1       │   0ms │    1ms   0% │    -     -  │    -     -  │   1ms   0%"
+            val header = buildString {
+                append("Ping ")
+                append(count)
+                append("     │   now │ ")
+                append(statCount1.toString().padStart(11))
+                append(" │ ")
+                append(statCount2.toString().padStart(11))
+                append(" │ ")
+                append(statCount3.toString().padStart(11))
+                append(" │  ping loss")
+            }
+            // Ping 1          │   now │          10 │          60 │         600 │  ping loss
+            // 127.0.0.1       │   0ms │    -     -  │    -     -  │    -     -  │   0ms   0%
             
             val elapsed = Duration.between(startTime, clock.instant()).toMillis()
             val sleep = PingConfiguration.interval - elapsed
