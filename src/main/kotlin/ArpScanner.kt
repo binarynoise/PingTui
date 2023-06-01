@@ -13,7 +13,7 @@ interface ArpScanner {
     
     private object WindowsArpScanner : ArpScanner {
         override fun findNewHosts(): List<Host> {
-            val getNetNeighbor = "powershell Get-NetNeighbor -AddressFamily IPv4 -State Reachable | select -ExpandProperty IPAddress"
+            val getNetNeighbor = """powershell "Get-NetNeighbor -AddressFamily IPv4 -State Reachable | select -ExpandProperty IPAddress""""
             return getNetNeighbor.exec().map { Host(it) }.toList()
         }
     }
